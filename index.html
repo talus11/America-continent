@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아메리카 대륙 지리 학습 & 퀴즈</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- D3.js & TopoJSON -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* 뷰 전환 애니메이션 */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .view-section.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* D3 Map Styles */
+        .country {
+            transition: fill 0.2s, opacity 0.2s, filter 0.2s;
+            cursor: pointer;
+            stroke: #ffffff;
+            stroke-width: 0.5px;
+        }
+        
+        .study-country:hover {
+            fill: #6366f1 !important; /* Hover 강조 */
+        }
+        .study-country.selected {
+            fill: #4f46e5 !important;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3));
+            stroke-width: 1.5px;
+        }
+
+        .quiz-country:hover {
+            opacity: 0.8;
+            stroke-width: 1.5px;
+        }
+
+        /* AI 기능 관련 스타일 */
+        .ai-gradient-text {
+            background: linear-gradient(to right, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ai-glow-btn {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .ai-glow-btn:hover {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col h-screen overflow-hidden">
+
+    <header class="bg-indigo-600 text-white shadow-md z-10 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('home')">
+                <i class="fa-solid fa-earth-americas text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-tight">아메리카 대륙 마스터</h1>
+            </div>
+            <nav class="hidden sm:flex gap-2">
+                <button onclick="switchView('home')" class="nav-btn px-4 py-2 rounded-lg font-semibold hover:bg-indigo-500 transition active">홈</button>
+                <button onclick="switchView('study')" class="nav-btn px-4 py-2 rounded-lg font-semibold hover:bg-indigo-500 transition">학습하기</button>
+                <button onclick="switchView('quiz')" class="nav-btn px-4 py-2 rounded-lg font-semibold hover:bg-indigo-500 transition">퀴즈풀기</button>
+            </nav>
+            <div class="sm:hidden">
+                <button onclick="switchView('home')" class="p-2"><i class="fa-solid fa-house"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow relative overflow-hidden flex flex-col">
+        
+        <!-- ================= PAGE 1: HOME ================= -->
+        <section id="home-view" class="view-section active flex-col items-center justify-center h-full bg-gradient-to-br from-indigo-50 to-white px-4">
+            <div class="max-w-3xl w-full text-center space-y-8">
+                <div class="inline-block bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-bold mb-2">
+                    실제 지형 기반 메르카토르 도법 적용
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-slate-800 leading-tight">
+                    아메리카 대륙의<br><span class="text-indigo-600">모든 국가를 탐험하세요</span>
+                </h2>
+                <p class="text-slate-500 text-lg md:text-xl">
+                    지도에서 직접 국가를 클릭하며 수도와 위치를 학습하고,<br> 배운 내용을 바탕으로 퀴즈에 도전하여 실력을 확인해보세요.
+                </p>
+                
+                <div class="grid sm:grid-cols-2 gap-6 mt-12 max-w-2xl mx-auto">
+                    <!-- 학습 모드 카드 -->
+                    <div onclick="switchView('study')" class="group cursor-pointer bg-white border border-slate-200 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all text-left">
+                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-book-atlas"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">1단계: 학습하기</h3>
+                        <p class="text-slate-500 text-sm">실제 지도를 클릭하며 북남미 국가들의 이름, 수도, 상세 정보를 학습합니다.</p>
+                    </div>
+
+                    <!-- 퀴즈 모드 카드 -->
+                    <div onclick="switchView('quiz')" class="group cursor-pointer bg-white border border-slate-200 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:emerald-300 transition-all text-left">
+                        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-gamepad"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">2단계: 퀴즈풀기</h3>
+                        <p class="text-slate-500 text-sm">학습한 지식을 바탕으로 국가의 위치를 정확히 찾아내는 영토 퀴즈를 풉니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: STUDY ================= -->
+        <section id="study-view" class="view-section flex-col h-full bg-white">
+            <div class="flex-grow flex flex-col md:flex-row w-full h-full">
+                <!-- 왼쪽: D3 지도 렌더링 영역 -->
+                <div class="w-full md:w-2/3 h-1/2 md:h-full bg-slate-100 relative border-r border-slate-200">
+                    <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 text-xs font-bold text-slate-600 flex items-center gap-2">
+                        <i class="fa-solid fa-hand-pointer text-indigo-500"></i> 국가를 클릭하세요 (마우스 휠로 확대/축소)
+                    </div>
+                    <!-- 맵 컨테이너 -->
+                    <div id="study-map" class="w-full h-full cursor-move"></div>
+                    <div id="study-loading" class="absolute inset-0 flex items-center justify-center bg-slate-100/80 z-20">
+                        <div class="text-center">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-2"></i>
+                            <p class="font-bold text-slate-600">지도 데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 오른쪽: 정보 패널 -->
+                <div class="w-full md:w-1/3 h-1/2 md:h-full bg-white p-6 overflow-y-auto flex flex-col">
+                    <h2 class="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2 border-b pb-4">
+                        <i class="fa-solid fa-book-open text-indigo-500"></i> 국가 정보 사전
+                    </h2>
+                    
+                    <div id="study-info-panel" class="flex-grow flex flex-col justify-center items-center text-center text-slate-400">
+                        <i class="fa-solid fa-map-location-dot text-6xl mb-4 text-slate-200"></i>
+                        <p>왼쪽 지도에서 궁금한 나라를 클릭하면<br>상세 정보가 이곳에 나타납니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: QUIZ ================= -->
+        <section id="quiz-view" class="view-section flex-col h-full bg-slate-50">
+            <div class="flex-grow flex flex-col md:flex-row w-full h-full">
+                <!-- 왼쪽: D3 지도 (퀴즈용) -->
+                <div class="w-full md:w-2/3 h-[55%] md:h-full bg-slate-200 relative border-r border-slate-300">
+                    <div id="quiz-map" class="w-full h-full cursor-crosshair"></div>
+                    <!-- 정답/오답 오버레이 피드백 -->
+                    <div id="quiz-feedback-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+                        <div id="quiz-feedback-icon" class="text-9xl drop-shadow-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 퀴즈 진행 패널 -->
+                <div class="w-full md:w-1/3 h-[45%] md:h-full bg-white p-6 flex flex-col justify-between shadow-xl z-10">
+                    
+                    <!-- 퀴즈 대기 화면 -->
+                    <div id="quiz-start-screen" class="flex-grow flex flex-col items-center justify-center text-center h-full">
+                        <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mb-4">
+                            <i class="fa-solid fa-flag-checkered"></i>
+                        </div>
+                        <h2 class="text-2xl font-black text-slate-800 mb-2">영토 찾기 퀴즈</h2>
+                        <p class="text-sm text-slate-500 mb-8">학습한 내용을 바탕으로<br>총 10개의 국가 위치를 맞춰보세요.</p>
+                        <button onclick="startQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                            퀴즈 시작하기
+                        </button>
+                    </div>
+
+                    <!-- 퀴즈 진행 화면 (기본 숨김) -->
+                    <div id="quiz-play-screen" class="hidden flex-grow flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-6 bg-slate-100 p-3 rounded-lg">
+                            <div class="text-sm font-bold text-slate-500">
+                                문제 <span id="quiz-current-num" class="text-indigo-600 text-lg">1</span> / 10
+                            </div>
+                            <div class="text-sm font-bold text-slate-500">
+                                점수: <span id="quiz-score" class="text-amber-500 text-lg">0</span>점
+                            </div>
+                        </div>
+
+                        <div class="flex-grow flex flex-col justify-center">
+                            <span class="inline-block bg-emerald-100 text-emerald-700 px-3 py-1 rounded-md text-xs font-bold mb-3 w-max">지도를 클릭하세요</span>
+                            <h3 id="quiz-question-text" class="text-2xl md:text-3xl font-black text-slate-800 leading-tight">
+                                질문이 이곳에 표시됩니다.
+                            </h3>
+                            <p class="text-slate-500 text-sm mt-3">오른쪽 화면이나 왼쪽 지도에서 해당하는 국가의 영토를 정확히 클릭하세요.</p>
+                            
+                            <!-- AI 힌트 영역 -->
+                            <div class="mt-6 border border-purple-100 bg-purple-50 rounded-xl p-4 relative overflow-hidden">
+                                <div class="absolute -right-4 -top-4 text-purple-200 text-6xl opacity-30"><i class="fa-solid fa-robot"></i></div>
+                                <button id="ai-hint-btn" onclick="requestAIHint()" class="ai-glow-btn flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:from-purple-600 hover:to-pink-600 w-max relative z-10">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI에게 힌트 받기
+                                </button>
+                                <div id="ai-hint-content" class="mt-3 text-purple-800 font-medium text-sm hidden relative z-10 leading-relaxed">
+                                    <!-- AI 힌트 내용이 여기에 표시됩니다 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 결과 피드백 텍스트 창 -->
+                        <div id="quiz-feedback-box" class="mt-4 p-4 rounded-xl text-center font-bold hidden border">
+                            <!-- 정답/오답 텍스트 -->
+                        </div>
+                    </div>
+
+                    <!-- 퀴즈 완료 화면 (기본 숨김) -->
+                    <div id="quiz-result-screen" class="hidden flex-grow flex flex-col items-center justify-center text-center h-full">
+                        <div class="text-6xl mb-4 text-amber-400"><i class="fa-solid fa-trophy"></i></div>
+                        <h2 class="text-3xl font-black text-slate-800 mb-2">퀴즈 완료!</h2>
+                        <p class="text-slate-500 mb-6">모든 문제를 다 풀었습니다.</p>
+                        
+                        <div class="bg-slate-50 border border-slate-200 w-full p-6 rounded-2xl mb-8">
+                            <p class="text-sm text-slate-500 font-bold mb-1">최종 점수</p>
+                            <p class="text-5xl font-black text-indigo-600"><span id="final-score">0</span><span class="text-2xl text-slate-400"> / 100</span></p>
+                        </div>
+
+                        <div class="flex gap-3 w-full">
+                            <button onclick="switchView('study')" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition">
+                                다시 학습하기
+                            </button>
+                            <button onclick="startQuiz()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition">
+                                다시 도전하기
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // 1. 아메리카 대륙 국가 데이터 (정확한 랜드마크 이미지로 업데이트)
+        const americasData = {
+            "124": { name: "캐나다", capital: "오타와", iso2: "ca", lat: 45.4215, lng: -75.6972, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Moraine_Lake_17092005.jpg?width=800", desc: "북아메리카 최북단에 위치한 세계에서 두 번째로 면적이 넓은 나라입니다. 로키산맥의 모레인 호수와 단풍이 유명합니다." },
+            "840": { name: "미국", capital: "워싱턴 D.C.", iso2: "us", lat: 38.8951, lng: -77.0364, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Statue_of_Liberty_7.jpg?width=800", desc: "50개의 주와 특별구로 이루어진 강대국입니다. 뉴욕의 자유의 여신상은 미국의 대표적인 상징입니다." },
+            "484": { name: "멕시코", capital: "멕시코시티", iso2: "mx", lat: 19.4326, lng: -99.1332, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Chichen_Itza_3.jpg?width=800", desc: "아스테카 문명과 마야 문명의 발상지입니다. 마야 유적인 치첸이트사가 유명합니다." },
+            "320": { name: "과테말라", capital: "과테말라시티", iso2: "gt", lat: 14.6349, lng: -90.5069, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Tikal_Temple1_2006_08_11.JPG?width=800", desc: "중앙아메리카에 위치하며 거대한 마야 문명의 중심지였던 티칼 유적이 있습니다." },
+            "084": { name: "벨리즈", capital: "벨모판", iso2: "bz", lat: 17.2510, lng: -88.7590, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Great_Blue_Hole_aerial_view.jpg?width=800", desc: "중미에서 유일하게 영어를 공용어로 사용하는 국가로, 신비로운 해저 동굴 '그레이트 블루홀'이 유명합니다." },
+            "340": { name: "온두라스", capital: "테구시갈파", iso2: "hn", lat: 14.0818, lng: -87.2068, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Copan_Ruinas_-_Honduras_-_Maya_Site.jpg?width=800", desc: "카리브해와 태평양에 모두 접해 있으며, 마야 유적인 코판(Copán)이 위치해 있습니다." },
+            "222": { name: "엘살바도르", capital: "산살바도르", iso2: "sv", lat: 13.6929, lng: -89.2182, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Volc%C3%A1n_de_Santa_Ana_o_Ilamatepec.jpg?width=800", desc: "중앙아메리카에서 가장 면적이 작지만 인구 밀도가 높은 '화산의 나라'입니다." },
+            "558": { name: "니카라과", capital: "마나과", iso2: "ni", lat: 12.1150, lng: -86.2362, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cathedral_of_Granada%2C_Nicaragua.jpg?width=800", desc: "중앙아메리카에서 가장 면적이 넓은 국가이며, 스페인 식민지 시대의 건축물이 남은 그라나다 대성당이 유명합니다." },
+            "188": { name: "코스타리카", capital: "산호세", iso2: "cr", lat: 9.9281, lng: -84.0907, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Arenal_Volcano_8-29-2010.JPG?width=800", desc: "군대를 폐지하고 평화를 중시하는 나라로, 아레날 화산 등 생태 관광이 매우 발달했습니다." },
+            "591": { name: "파나마", capital: "파나마시티", iso2: "pa", lat: 8.9824, lng: -79.5199, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Panama_Canal_Miraflores_Locks.jpg?width=800", desc: "북미와 남미를 잇는 지협에 위치하며, 태평양과 대서양을 연결하는 파나마 운하로 세계 무역의 핵심입니다." },
+            "192": { name: "쿠바", capital: "아바나", iso2: "cu", lat: 23.1136, lng: -82.3666, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Havana_-_Capitolio_Nacional.jpg?width=800", desc: "카리브해에서 가장 큰 섬나라이며, 올드카와 아바나의 카피톨리오 건축물이 상징적입니다." },
+            "214": { name: "도미니카 공화국", capital: "산토도밍고", iso2: "do", lat: 18.4861, lng: -69.9312, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Basilica_de_Nuestra_Senora_de_la_Altagracia_2.jpg?width=800", desc: "카리브해 히스파니올라 섬의 동부를 차지하며 아름다운 휴양지와 독특한 건축물들이 즐비합니다." },
+            "332": { name: "아이티", capital: "포르토프랭스", iso2: "ht", lat: 18.5392, lng: -72.3364, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Citadelle_Laferri%C3%A8re.jpg?width=800", desc: "세계 최초로 흑인 노예들이 혁명을 일으켜 독립한 공화국으로 시타델 라페리에르 요새가 있습니다." },
+            "388": { name: "자메이카", capital: "킹스턴", iso2: "jm", lat: 17.9714, lng: -76.7936, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Dunns_River_Falls_Jamaica.jpg?width=800", desc: "레게 음악의 발상지이자 육상 단거리 강국으로, 던스 리버 폭포 등 자연경관이 수려합니다." },
+            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg?width=800", desc: "남미 북부에 위치하며 최고급 커피 원산지로 매우 유명합니다. 협곡에 세워진 라스 라하스 성당이 절경입니다." },
+            "862": { name: "베네수엘라", capital: "카라카스", iso2: "ve", lat: 10.4806, lng: -66.9036, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salto_Angel-Venezuela.jpg?width=800", desc: "세계에서 가장 높은 폭포인 엔젤 폭포(앙헬 폭포)가 있는 자연의 경이로움을 간직한 나라입니다." },
+            "328": { name: "가이아나", capital: "조지타운", iso2: "gy", lat: 6.8013, lng: -58.1551, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Kaieteur_Falls_Guyana_2.jpg?width=800", desc: "남미 북부에 위치하며 원시 열대우림과 거대한 카이에투어 폭포가 잘 보존된 나라입니다." },
+            "740": { name: "수리남", capital: "파라마리보", iso2: "sr", lat: 5.8520, lng: -55.2038, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Saint_Peter_and_Paul_Cathedral_Paramaribo.jpg?width=800", desc: "남미에서 가장 면적이 작은 독립국 중 하나이며 나무로 지어진 성 베드로 바울 대성당이 유명합니다." },
+            "218": { name: "에콰도르", capital: "키토", iso2: "ec", lat: -0.1807, lng: -78.4678, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Iglesia_de_la_Compa%C3%B1%C3%ADa%2C_Quito%2C_Ecuador.jpg?width=800", desc: "적도라는 뜻의 국명을 가졌으며, 진화론의 배경이 된 갈라파고스 제도와 황금빛 교회가 속해있습니다." },
+            "604": { name: "페루", capital: "리마", iso2: "pe", lat: -12.0464, lng: -77.0428, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Machu_Picchu%2C_Peru.jpg?width=800", desc: "찬란했던 잉카 제국의 중심지로, 안데스 산맥의 공중 도시 마추픽추가 세계적인 명소입니다." },
+            "076": { name: "브라질", capital: "브라질리아", iso2: "br", lat: -15.8267, lng: -47.9218, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cristo_Redentor_-_Rio_de_Janeiro%2C_Brasil.jpg?width=800", desc: "남아메리카 면적의 절반을 차지하는 거대 국가로, 리우데자네이루의 거대 예수상과 아마존이 상징입니다." },
+            "068": { name: "볼리비아", capital: "수크레", iso2: "bo", lat: -19.0333, lng: -65.2627, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salar_de_Uyuni_Bolivia.jpg?width=800", desc: "남미의 내륙국으로 고산지대에 위치해 있으며, '하늘의 거울'이라 불리는 우유니 소금사막이 유명합니다." },
+            "600": { name: "파라과이", capital: "아순시온", iso2: "py", lat: -25.2637, lng: -57.5759, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Palacio_de_los_L%C3%B3pez_-_Asunci%C3%B3n.jpg?width=800", desc: "남미 한가운데 위치한 내륙국으로 농축산업이 발달해 있으며 화려한 로페스 궁전이 있습니다." },
+            "858": { name: "우루과이", capital: "몬테비데오", iso2: "uy", lat: -34.9011, lng: -56.1645, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Casapueblo%2C_Punta_Ballena.jpg?width=800", desc: "남미에서 복지와 민주주의가 가장 안정된 축구 강국이며, 독특한 외관의 카사푸에블로가 명소입니다." },
+            "032": { name: "아르헨티나", capital: "부에노스아이레스", iso2: "ar", lat: -34.6037, lng: -58.3816, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Perito_Moreno_Glacier_Patagonia_Argentina_Luca_Galuzzi_2005.JPG?width=800", desc: "탱고의 발상지이며, 파타고니아의 장엄한 페리토 모레노 빙하와 광활한 팜파스 초원이 유명합니다." },
+            "152": { name: "칠레", capital: "산티아고", iso2: "cl", lat: -33.4489, lng: -70.6693, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Torres_del_Paine_y_cuernos_del_Paine.jpg?width=800", desc: "세계에서 가장 남북으로 긴 나라로, 파타고니아의 토레스 델 파이네 국립공원의 절경이 아름답습니다." }
+        };
+
+        // 전역 상태 변수
+        let globalFeatures = null; // TopoJSON에서 추출한 아메리카 국가 feature 배열
+        let studySvg = null;
+        let quizSvg = null;
+        let isStudyMapLoaded = false;
+        let isQuizMapLoaded = false;
+
+        // 화면 전환 함수
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`${viewId}-view`).classList.add('active');
+            
+            // 네비게이션 버튼 스타일 변경
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-indigo-700', 'ring-2', 'ring-white'));
+            const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(viewId));
+            if(activeBtn) activeBtn.classList.add('bg-indigo-700', 'ring-2', 'ring-white');
+
+            // 뷰 전환 후 지도가 아직 렌더링되지 않았고 데이터가 있다면 렌더링 (컨테이너가 보일 때 그려야 크기가 정확함)
+            if (globalFeatures) {
+                if (viewId === 'study' && !isStudyMapLoaded) {
+                    renderSingleMap('#study-map', 'study');
+                    isStudyMapLoaded = true;
+                } else if (viewId === 'quiz' && !isQuizMapLoaded) {
+                    renderSingleMap('#quiz-map', 'quiz');
+                    isQuizMapLoaded = true;
+                }
+            }
+
+            // 퀴즈 뷰로 갔을 때 퀴즈가 진행 중이 아니라면 시작 화면으로
+            if(viewId === 'quiz' && currentQuizIndex === -1) {
+                document.getElementById('quiz-start-screen').classList.remove('hidden');
+                document.getElementById('quiz-play-screen').classList.add('hidden');
+                document.getElementById('quiz-result-screen').classList.add('hidden');
+                resetQuizMapColors();
+            }
+        }
+
+        // TopoJSON 로드 및 필터링
+        async function loadMapData() {
+            try {
+                // world-atlas TopoJSON 데이터 패치 (50m 해상도)
+                const response = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
+                const world = await response.json();
+                
+                // TopoJSON을 GeoJSON Features로 변환
+                const countries = topojson.feature(world, world.objects.countries).features;
+                
+                // 준비된 아메리카 데이터(americasData)의 키(ID)와 일치하는 국가만 필터링
+                const targetIds = Object.keys(americasData);
+                globalFeatures = countries.filter(d => targetIds.includes(d.id));
+
+                document.getElementById('study-loading').classList.add('hidden');
+                
+                // 만약 현재 뷰가 study나 quiz면 즉시 렌더링
+                const activeView = document.querySelector('.view-section.active').id;
+                if(activeView === 'study-view' && !isStudyMapLoaded) {
+                    renderSingleMap('#study-map', 'study');
+                    isStudyMapLoaded = true;
+                } else if (activeView === 'quiz-view' && !isQuizMapLoaded) {
+                    renderSingleMap('#quiz-map', 'quiz');
+                    isQuizMapLoaded = true;
+                }
+            } catch (error) {
+                console.error("Map data loading failed:", error);
+                document.getElementById('study-loading').innerHTML = `
+                    <div class="text-center text-red-500">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-2"></i>
+                        <p class="font-bold">지도 데이터를 불러오는 데 실패했습니다.<br>새로고침 해주세요.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSingleMap(containerSelector, mode) {
+            const container = d3.select(containerSelector);
+            container.selectAll("*").remove(); // 기존 내용 비우기
+            
+            const width = container.node().getBoundingClientRect().width;
+            const height = container.node().getBoundingClientRect().height;
+
+            const svg = container.append("svg")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("viewBox", `0 0 ${width} ${height}`);
+
+            // Zoom 및 Pan 처리를 위한 그룹 엘리먼트
+            const g = svg.append("g");
+
+            // GeoJSON 데이터를 컨테이너 크기에 맞게 자동 스케일링 (메르카토르 투영법 적용)
+            const projection = d3.geoMercator()
+                .fitSize([width * 0.95, height * 0.95], { type: "FeatureCollection", features: globalFeatures });
+
+            const path = d3.geoPath().projection(projection);
+
+            // 국가 구분을 위한 5가지 파스텔 색상
+            const mapColors = ['#fecaca', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'];
+
+            // 국가 Path 그리기
+            g.selectAll("path.country")
+                .data(globalFeatures)
+                .enter().append("path")
+                .attr("d", path)
+                .attr("class", `country ${mode}-country`)
+                .attr("fill", d => {
+                    if (mode === 'study') {
+                        return mapColors[parseInt(d.id) % 5];
+                    } else {
+                        return '#cbd5e1'; 
+                    }
+                })
+                .attr("id", d => `${mode}-country-${d.id}`)
+                .on("click", function(event, d) {
+                    if(mode === 'study') handleStudyClick(d.id, this);
+                    else if(mode === 'quiz') handleQuizClick(d.id, this);
+                });
+
+            // 학습 모드일 때만 수도 위치에 별(★) 마커 추가
+            if (mode === 'study') {
+                const mapDataArray = Object.entries(americasData).map(([id, data]) => ({id, ...data}));
+                
+                g.selectAll(".capital-star")
+                    .data(mapDataArray.filter(d => d.lat && d.lng))
+                    .enter()
+                    .append("path")
+                    // 별 모양 SVG Path
+                    .attr("d", "M 0 -7 L 1.5 -2.5 L 6 -2.5 L 2.5 0.5 L 4 5 L 0 2.5 L -4 5 L -2.5 0.5 L -6 -2.5 L -1.5 -2.5 Z")
+                    .attr("class", "capital-star")
+                    .attr("fill", "#fbbf24") // 노란색 (amber-400)
+                    .attr("stroke", "#b45309") // 테두리 진한 주황색
+                    .attr("stroke-width", "0.5")
+                    .attr("transform", d => {
+                        const [x, y] = projection([d.lng, d.lat]);
+                        return `translate(${x}, ${y})`;
+                    })
+                    .style("pointer-events", "none") // 별을 클릭해도 뒤에 있는 국가가 클릭되도록
+                    .style("filter", "drop-shadow(0px 2px 2px rgba(0,0,0,0.3))");
+            }
+
+            // Zoom 동작 정의
+            const zoom = d3.zoom()
+                .scaleExtent([1, 8]) // 1배~8배 확대
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                    
+                    // 줌 할 때 별이 너무 커지지 않도록 역방향 스케일링 적용
+                    if (mode === 'study') {
+                        g.selectAll(".capital-star")
+                            .attr("transform", d => {
+                                const [x, y] = projection([d.lng, d.lat]);
+                                return `translate(${x}, ${y}) scale(${1 / event.transform.k})`;
+                            });
+                    }
+                });
+            
+            svg.call(zoom);
+            
+            // 초기 더블클릭 줌 막기
+            svg.on("dblclick.zoom", null);
+        }
+
+        function handleStudyClick(countryId, element) {
+            // 모든 국가 선택 해제
+            d3.selectAll('.study-country').classed('selected', false);
+            
+            // 클릭한 국가 선택
+            d3.select(element).classed('selected', true);
+
+            const data = americasData[countryId];
+            const panel = document.getElementById('study-info-panel');
+            
+            if(data) {
+                // 이미지 로드 실패 시 깨짐 방지를 위한 Fallback 처리
+                const fallbackImg = `https://placehold.co/600x400/e2e8f0/475569?text=${encodeURIComponent(data.name)}+Landmark`;
+                const flagFallbackImg = `https://placehold.co/160x100/e2e8f0/475569?text=${encodeURIComponent(data.iso2.toUpperCase())}`;
+
+                panel.innerHTML = `
+                    <div class="animate-fade-in w-full text-left space-y-4 flex flex-col h-full">
+                        
+                        <!-- 상단 커버 이미지 -->
+                        <div class="w-full h-40 rounded-2xl overflow-hidden shadow-sm relative group bg-slate-200">
+                            <img src="${data.imageUrl}" alt="${data.name} 랜드마크 풍경" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                 onerror="this.onerror=null; this.src='${fallbackImg}';">
+                        </div>
+
+                        <div>
+                            <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
+                                <!-- 고화질 국기 이미지 (FlagCDN) -->
+                                <img src="https://flagcdn.com/w160/${data.iso2}.png" alt="${data.name} 국기" 
+                                     class="w-20 h-auto rounded shadow-sm border border-slate-200 bg-white"
+                                     onerror="this.onerror=null; this.src='${flagFallbackImg}';">
+                                <div>
+                                    <h3 class="text-3xl font-black text-slate-800">${data.name}</h3>
+                                    <p class="text-amber-500 font-bold mt-1 text-lg">
+                                        <i class="fa-solid fa-star"></i> 수도: ${data.capital}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 leading-relaxed text-slate-700 mt-4 text-sm md:text-base">
+                                ${data.desc}
+                            </div>
+                        </div>
+                        
+                        <!-- AI 지식 확장 영역 -->
+                        <div class="flex-grow bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-4 flex flex-col">
+                            <h4 class="font-bold text-slate-700 flex items-center gap-2 mb-3 text-sm md:text-base">
+                                <i class="fa-solid fa-sparkles text-purple-500"></i> <span class="ai-gradient-text">AI 보조교사의 심화 학습</span>
+                            </h4>
+                            <button id="ai-fact-btn" onclick="requestAIFact('${data.name}')" class="ai-glow-btn w-full bg-white border border-purple-200 text-purple-600 font-bold py-2.5 rounded-xl shadow-sm hover:bg-purple-50 transition flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-brain"></i> ${data.name}에 대해 더 알려주세요!
+                            </button>
+                            <div id="ai-fact-content" class="mt-4 text-sm text-slate-700 leading-relaxed overflow-y-auto hidden flex-grow bg-white p-3 rounded-xl border border-purple-100 shadow-inner">
+                                <!-- AI 상식 내용 -->
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-2 shrink-0">
+                            <span class="inline-block px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-xs font-semibold">
+                                <i class="fa-solid fa-check-circle mr-1"></i> 위치 확인 완료
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        let quizPool = [];
+        let currentQuizIndex = -1;
+        let score = 0;
+        let isWaitingNext = false;
+
+        function startQuiz() {
+            // 문제 은행 생성 (10문제 무작위 추출)
+            const allIds = Object.keys(americasData);
+            quizPool = allIds.sort(() => 0.5 - Math.random()).slice(0, 10);
+            
+            currentQuizIndex = 0;
+            score = 0;
+            isWaitingNext = false;
+
+            // UI 전환
+            document.getElementById('quiz-start-screen').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.add('hidden');
+            document.getElementById('quiz-play-screen').classList.remove('hidden');
+            
+            resetQuizMapColors();
+            renderNextQuestion();
+        }
+
+        function renderNextQuestion() {
+            isWaitingNext = false;
+            document.getElementById('quiz-current-num').innerText = currentQuizIndex + 1;
+            document.getElementById('quiz-score').innerText = score;
+            document.getElementById('quiz-feedback-box').classList.add('hidden');
+            
+            // AI 힌트 UI 초기화
+            const aiHintBtn = document.getElementById('ai-hint-btn');
+            const aiHintContent = document.getElementById('ai-hint-content');
+            if(aiHintBtn && aiHintContent) {
+                aiHintBtn.style.display = 'flex';
+                aiHintBtn.disabled = false;
+                aiHintBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> AI에게 힌트 받기';
+                aiHintContent.classList.add('hidden');
+                aiHintContent.innerHTML = '';
+            }
+            
+            // 모든 국가 맵 색상 초기화
+            resetQuizMapColors();
+
+            const targetId = quizPool[currentQuizIndex];
+            const data = americasData[targetId];
+
+            // 질문 형태 다변화 (이름 물어보기 vs 수도 물어보기)
+            const isCapitalQuestion = Math.random() > 0.5;
+            let qText = "";
+            if(isCapitalQuestion) {
+                qText = `<span class="text-indigo-600">수도가 '${data.capital}'</span>인 국가는 어디일까요?`;
+            } else {
+                qText = `지도에서 <span class="text-indigo-600">'${data.name}'</span> 영토를 찾아 클릭하세요.`;
+            }
+            
+            document.getElementById('quiz-question-text').innerHTML = qText;
+        }
+
+        function handleQuizClick(countryId, element) {
+            if(isWaitingNext || currentQuizIndex < 0 || currentQuizIndex >= quizPool.length) return;
+            isWaitingNext = true; // 중복 클릭 방지
+
+            const targetId = quizPool[currentQuizIndex];
+            const isCorrect = (countryId === targetId);
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box');
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-700', 'border-emerald-200', 'bg-red-50', 'text-red-700', 'border-red-200');
+            
+            if(isCorrect) {
+                score += 10;
+                document.getElementById('quiz-score').innerText = score;
+                d3.select(element).attr('fill', '#34d399'); // 정답 초록색
+                
+                feedbackBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
+                feedbackBox.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> 정답입니다! (+10점)`;
+                showOverlayFeedback('correct');
+            } else {
+                d3.select(element).attr('fill', '#f87171'); // 오답 빨간색
+                // 정답 국가도 파란색으로 표시해서 알려줌
+                d3.select(`#quiz-country-${targetId}`).attr('fill', '#60a5fa'); 
+                
+                feedbackBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+                feedbackBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> 오답입니다! 파란색으로 표시된 곳이 정답입니다.`;
+                showOverlayFeedback('wrong');
+            }
+
+            // 1.5초 후 다음 문제로
+            setTimeout(() => {
+                currentQuizIndex++;
+                if(currentQuizIndex < quizPool.length) {
+                    renderNextQuestion();
+                } else {
+                    finishQuiz();
+                }
+            }, 1800);
+        }
+
+        // 큰 아이콘 오버레이 표시
+        function showOverlayFeedback(type) {
+            const overlay = document.getElementById('quiz-feedback-overlay');
+            const icon = document.getElementById('quiz-feedback-icon');
+            
+            if(type === 'correct') {
+                icon.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-xmark text-red-500"></i>';
+            }
+            
+            overlay.classList.remove('opacity-0');
+            
+            setTimeout(() => {
+                overlay.classList.add('opacity-0');
+            }, 800);
+        }
+
+        function resetQuizMapColors() {
+            d3.selectAll('.quiz-country').attr('fill', '#cbd5e1'); // 기본 slate-300 색상
+        }
+
+        function finishQuiz() {
+            currentQuizIndex = -1;
+            document.getElementById('quiz-play-screen').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+            
+            // 점수에 따른 피드백 이펙트 (폭죽 등 추가 가능)
+            if(score >= 80) {
+                document.getElementById('quiz-result-screen').querySelector('h2').innerText = "훌륭합니다! 지리 마스터!";
+            } else if (score >= 50) {
+                document.getElementById('quiz-result-screen').querySelector('h2').innerText = "잘했어요! 조금만 더 복습해볼까요?";
+            } else {
+                document.getElementById('quiz-result-screen').querySelector('h2').innerText = "괜찮아요! 학습 모드에서 다시 배워봐요.";
+            }
+        }
+
+        // 초기화 (DOM 로드 후 데이터 패치 시작)
+        window.onload = () => {
+            loadMapData();
+        };
+
+        // 창 크기 조절 시 D3 맵 리사이징 처리 방어 로직 (간단히)
+        window.addEventListener('resize', () => {
+            if(isStudyMapLoaded || isQuizMapLoaded) {
+                // Resize 발생시 map을 다시 그리면 부하가 올 수 있으므로 생략하거나 디바운싱 적용 가능
+                // 현재는 SVG viewBox 덕분에 비율이 유지되며 자동 반응형 처리됨
+            }
+        });
+
+        // ==========================================
+        // Gemini API 연동 기능
+        // ==========================================
+        const apiKey = ""; // Canvas 환경에서 자동 주입됨
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        // 공통 Gemini API 호출 함수
+        async function fetchFromGemini(prompt, systemInstruction) {
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Gemini Response Error:", data);
+                    return "AI 응답을 불러오는 중 문제가 발생했습니다.";
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                return "네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.";
+            }
+        }
+
+        // 1. 학습 모드 - AI 상식 가져오기
+        async function requestAIFact(countryName) {
+            const btn = document.getElementById('ai-fact-btn');
+            const contentBox = document.getElementById('ai-fact-content');
+            
+            // 로딩 상태 처리
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 재미있는 이야기를 찾아보는 중...';
+            contentBox.classList.add('hidden');
+
+            const systemInstruction = "당신은 친절하고 재미있는 지리 선생님입니다. 초등학생~중학생이 이해하기 쉽고 흥미를 느낄 수 있는 말투로 대답해주세요. 설명은 너무 길지 않게 핵심만 짚어주세요.";
+            const prompt = `지도 학습 중입니다. 학생이 '${countryName}'을(를) 클릭했습니다. 이 국가와 관련된 아주 신기하고 재미있는 지리, 역사, 문화 상식 2가지를 알려주세요. 각괄호나 볼드체 등을 써서 가독성 좋게 HTML 형태로 서식을 지정해도 좋습니다. (줄바꿈은 <br> 태그 사용)`;
+
+            const resultText = await fetchFromGemini(prompt, systemInstruction);
+
+            // 결과 표시
+            btn.style.display = 'none'; // 버튼 숨기기
+            contentBox.innerHTML = resultText;
+            contentBox.classList.remove('hidden');
+        }
+
+        // 2. 퀴즈 모드 - AI 힌트 가져오기
+        async function requestAIHint() {
+            const targetId = quizPool[currentQuizIndex];
+            if (!targetId) return;
+            const countryName = americasData[targetId].name;
+            const capitalName = americasData[targetId].capital;
+
+            const btn = document.getElementById('ai-hint-btn');
+            const contentBox = document.getElementById('ai-hint-content');
+
+            // 로딩 상태 처리
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 힌트를 고민하는 중...';
+
+            const systemInstruction = "당신은 지리 퀴즈 출제자이자 힌트 제공자입니다. 절대 국가의 이름이나 수도 이름을 직접 언급하지 마세요.";
+            const prompt = `학생이 아메리카 대륙 지도 퀴즈를 풀고 있습니다. 현재 맞춰야 할 국가는 '${countryName}'입니다. 이 국가가 어디에 있는지 유추할 수 있도록, 지형적 특징, 위치적 특징(주변 국가나 바다), 또는 아주 유명한 상징물에 대한 힌트를 1~2문장으로 주세요. 정답을 쉽게 맞출 수 있게 도와주되, 직접적인 국가명('${countryName}')이나 수도명('${capitalName}')은 반드시 숨겨주세요.`;
+
+            const resultText = await fetchFromGemini(prompt, systemInstruction);
+
+            // 결과 표시
+            btn.style.display = 'none';
+            contentBox.innerHTML = `<strong>💡 AI 힌트:</strong><br>${resultText}`;
+            contentBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
