@@ -61,21 +61,6 @@
             stroke-width: 1.5px;
         }
 
-        /* AI 기능 관련 스타일 */
-        .ai-gradient-text {
-            background: linear-gradient(to right, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .ai-glow-btn {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        .ai-glow-btn:hover {
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
-            transform: translateY(-2px);
-        }
-
         /* 커스텀 스크롤바 */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
@@ -114,7 +99,7 @@
                     아메리카 대륙의<br><span class="text-indigo-600">모든 국가를 탐험하세요</span>
                 </h2>
                 <p class="text-slate-500 text-lg md:text-xl">
-                    지도에서 직접 국가를 클릭하며 수도와 위치를 학습하고,<br> 배운 내용을 바탕으로 퀴즈에 도전하여 실력을 확인해보세요.
+                    지도에서 직접 국가를 클릭하며 수도와 상세 정보를 학습하고,<br> 배운 내용을 바탕으로 퀴즈에 도전하여 실력을 확인해보세요.
                 </p>
                 
                 <div class="grid sm:grid-cols-2 gap-6 mt-12 max-w-2xl mx-auto">
@@ -124,7 +109,7 @@
                             <i class="fa-solid fa-book-atlas"></i>
                         </div>
                         <h3 class="text-2xl font-bold text-slate-800 mb-2">1단계: 학습하기</h3>
-                        <p class="text-slate-500 text-sm">실제 지도를 클릭하며 북남미 국가들의 이름, 수도, 상세 정보를 학습합니다.</p>
+                        <p class="text-slate-500 text-sm">실제 지도를 클릭하며 북남미 국가들의 인구, 종교, 언어, 특징 등을 학습합니다.</p>
                     </div>
 
                     <!-- 퀴즈 모드 카드 -->
@@ -215,17 +200,6 @@
                                 질문이 이곳에 표시됩니다.
                             </h3>
                             <p class="text-slate-500 text-sm mt-3">오른쪽 화면이나 왼쪽 지도에서 해당하는 국가의 영토를 정확히 클릭하세요.</p>
-                            
-                            <!-- AI 힌트 영역 -->
-                            <div class="mt-6 border border-purple-100 bg-purple-50 rounded-xl p-4 relative overflow-hidden">
-                                <div class="absolute -right-4 -top-4 text-purple-200 text-6xl opacity-30"><i class="fa-solid fa-robot"></i></div>
-                                <button id="ai-hint-btn" onclick="requestAIHint()" class="ai-glow-btn flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:from-purple-600 hover:to-pink-600 w-max relative z-10">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI에게 힌트 받기
-                                </button>
-                                <div id="ai-hint-content" class="mt-3 text-purple-800 font-medium text-sm hidden relative z-10 leading-relaxed">
-                                    <!-- AI 힌트 내용이 여기에 표시됩니다 -->
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- 결과 피드백 텍스트 창 -->
@@ -261,38 +235,38 @@
     </main>
 
     <script>
-        // 1. 아메리카 대륙 국가 데이터 (정확한 랜드마크 이미지로 업데이트)
+        // 1. 아메리카 대륙 국가 데이터 (위키백과 기반 인구, 언어, 종교, 특징 데이터 추가)
         const americasData = {
-            "124": { name: "캐나다", capital: "오타와", iso2: "ca", lat: 45.4215, lng: -75.6972, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Moraine_Lake_17092005.jpg?width=800", desc: "북아메리카 최북단에 위치한 세계에서 두 번째로 면적이 넓은 나라입니다. 로키산맥의 모레인 호수와 단풍이 유명합니다." },
-            "840": { name: "미국", capital: "워싱턴 D.C.", iso2: "us", lat: 38.8951, lng: -77.0364, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Statue_of_Liberty_7.jpg?width=800", desc: "50개의 주와 특별구로 이루어진 강대국입니다. 뉴욕의 자유의 여신상은 미국의 대표적인 상징입니다." },
-            "484": { name: "멕시코", capital: "멕시코시티", iso2: "mx", lat: 19.4326, lng: -99.1332, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Chichen_Itza_3.jpg?width=800", desc: "아스테카 문명과 마야 문명의 발상지입니다. 마야 유적인 치첸이트사가 유명합니다." },
-            "320": { name: "과테말라", capital: "과테말라시티", iso2: "gt", lat: 14.6349, lng: -90.5069, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Tikal_Temple1_2006_08_11.JPG?width=800", desc: "중앙아메리카에 위치하며 거대한 마야 문명의 중심지였던 티칼 유적이 있습니다." },
-            "084": { name: "벨리즈", capital: "벨모판", iso2: "bz", lat: 17.2510, lng: -88.7590, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Great_Blue_Hole_aerial_view.jpg?width=800", desc: "중미에서 유일하게 영어를 공용어로 사용하는 국가로, 신비로운 해저 동굴 '그레이트 블루홀'이 유명합니다." },
-            "340": { name: "온두라스", capital: "테구시갈파", iso2: "hn", lat: 14.0818, lng: -87.2068, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Copan_Ruinas_-_Honduras_-_Maya_Site.jpg?width=800", desc: "카리브해와 태평양에 모두 접해 있으며, 마야 유적인 코판(Copán)이 위치해 있습니다." },
-            "222": { name: "엘살바도르", capital: "산살바도르", iso2: "sv", lat: 13.6929, lng: -89.2182, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Volc%C3%A1n_de_Santa_Ana_o_Ilamatepec.jpg?width=800", desc: "중앙아메리카에서 가장 면적이 작지만 인구 밀도가 높은 '화산의 나라'입니다." },
-            "558": { name: "니카라과", capital: "마나과", iso2: "ni", lat: 12.1150, lng: -86.2362, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cathedral_of_Granada%2C_Nicaragua.jpg?width=800", desc: "중앙아메리카에서 가장 면적이 넓은 국가이며, 스페인 식민지 시대의 건축물이 남은 그라나다 대성당이 유명합니다." },
-            "188": { name: "코스타리카", capital: "산호세", iso2: "cr", lat: 9.9281, lng: -84.0907, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Arenal_Volcano_8-29-2010.JPG?width=800", desc: "군대를 폐지하고 평화를 중시하는 나라로, 아레날 화산 등 생태 관광이 매우 발달했습니다." },
-            "591": { name: "파나마", capital: "파나마시티", iso2: "pa", lat: 8.9824, lng: -79.5199, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Panama_Canal_Miraflores_Locks.jpg?width=800", desc: "북미와 남미를 잇는 지협에 위치하며, 태평양과 대서양을 연결하는 파나마 운하로 세계 무역의 핵심입니다." },
-            "192": { name: "쿠바", capital: "아바나", iso2: "cu", lat: 23.1136, lng: -82.3666, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Havana_-_Capitolio_Nacional.jpg?width=800", desc: "카리브해에서 가장 큰 섬나라이며, 올드카와 아바나의 카피톨리오 건축물이 상징적입니다." },
-            "214": { name: "도미니카 공화국", capital: "산토도밍고", iso2: "do", lat: 18.4861, lng: -69.9312, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Basilica_de_Nuestra_Senora_de_la_Altagracia_2.jpg?width=800", desc: "카리브해 히스파니올라 섬의 동부를 차지하며 아름다운 휴양지와 독특한 건축물들이 즐비합니다." },
-            "332": { name: "아이티", capital: "포르토프랭스", iso2: "ht", lat: 18.5392, lng: -72.3364, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Citadelle_Laferri%C3%A8re.jpg?width=800", desc: "세계 최초로 흑인 노예들이 혁명을 일으켜 독립한 공화국으로 시타델 라페리에르 요새가 있습니다." },
-            "388": { name: "자메이카", capital: "킹스턴", iso2: "jm", lat: 17.9714, lng: -76.7936, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Dunns_River_Falls_Jamaica.jpg?width=800", desc: "레게 음악의 발상지이자 육상 단거리 강국으로, 던스 리버 폭포 등 자연경관이 수려합니다." },
-            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg/800px-Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg", desc: "남미 북부에 위치하며 최고급 커피 원산지로 매우 유명합니다. 협곡에 세워진 라스 라하스 성당이 절경입니다." },
-            "862": { name: "베네수엘라", capital: "카라카스", iso2: "ve", lat: 10.4806, lng: -66.9036, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salto_Angel-Venezuela.jpg?width=800", desc: "세계에서 가장 높은 폭포인 엔젤 폭포(앙헬 폭포)가 있는 자연의 경이로움을 간직한 나라입니다." },
-            "328": { name: "가이아나", capital: "조지타운", iso2: "gy", lat: 6.8013, lng: -58.1551, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Kaieteur_Falls_Guyana_2.jpg?width=800", desc: "남미 북부에 위치하며 원시 열대우림과 거대한 카이에투어 폭포가 잘 보존된 나라입니다." },
-            "740": { name: "수리남", capital: "파라마리보", iso2: "sr", lat: 5.8520, lng: -55.2038, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Saint_Peter_and_Paul_Cathedral_Paramaribo.jpg?width=800", desc: "남미에서 가장 면적이 작은 독립국 중 하나이며 나무로 지어진 성 베드로 바울 대성당이 유명합니다." },
-            "218": { name: "에콰도르", capital: "키토", iso2: "ec", lat: -0.1807, lng: -78.4678, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Iglesia_de_la_Compa%C3%B1%C3%ADa%2C_Quito%2C_Ecuador.jpg?width=800", desc: "적도라는 뜻의 국명을 가졌으며, 진화론의 배경이 된 갈라파고스 제도와 황금빛 교회가 속해있습니다." },
-            "604": { name: "페루", capital: "리마", iso2: "pe", lat: -12.0464, lng: -77.0428, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Machu_Picchu%2C_Peru.jpg?width=800", desc: "찬란했던 잉카 제국의 중심지로, 안데스 산맥의 공중 도시 마추픽추가 세계적인 명소입니다." },
-            "076": { name: "브라질", capital: "브라질리아", iso2: "br", lat: -15.8267, lng: -47.9218, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cristo_Redentor_-_Rio_de_Janeiro%2C_Brasil.jpg?width=800", desc: "남아메리카 면적의 절반을 차지하는 거대 국가로, 리우데자네이루의 거대 예수상과 아마존이 상징입니다." },
-            "068": { name: "볼리비아", capital: "수크레", iso2: "bo", lat: -19.0333, lng: -65.2627, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salar_de_Uyuni_Bolivia.jpg?width=800", desc: "남미의 내륙국으로 고산지대에 위치해 있으며, '하늘의 거울'이라 불리는 우유니 소금사막이 유명합니다." },
-            "600": { name: "파라과이", capital: "아순시온", iso2: "py", lat: -25.2637, lng: -57.5759, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Palacio_de_los_L%C3%B3pez_-_Asunci%C3%B3n.jpg?width=800", desc: "남미 한가운데 위치한 내륙국으로 농축산업이 발달해 있으며 화려한 로페스 궁전이 있습니다." },
-            "858": { name: "우루과이", capital: "몬테비데오", iso2: "uy", lat: -34.9011, lng: -56.1645, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Casapueblo%2C_Punta_Ballena.jpg?width=800", desc: "남미에서 복지와 민주주의가 가장 안정된 축구 강국이며, 독특한 외관의 카사푸에블로가 명소입니다." },
-            "032": { name: "아르헨티나", capital: "부에노스아이레스", iso2: "ar", lat: -34.6037, lng: -58.3816, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Perito_Moreno_Glacier_Patagonia_Argentina_Luca_Galuzzi_2005.JPG?width=800", desc: "탱고의 발상지이며, 파타고니아의 장엄한 페리토 모레노 빙하와 광활한 팜파스 초원이 유명합니다." },
-            "152": { name: "칠레", capital: "산티아고", iso2: "cl", lat: -33.4489, lng: -70.6693, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Torres_del_Paine_y_cuernos_del_Paine.jpg?width=800", desc: "세계에서 가장 남북으로 긴 나라로, 파타고니아의 토레스 델 파이네 국립공원의 절경이 아름답습니다." }
+            "124": { name: "캐나다", capital: "오타와", iso2: "ca", lat: 45.4215, lng: -75.6972, pop: "약 3,900만 명", lang: "영어, 프랑스어", rel: "기독교 (가톨릭, 개신교 등)", desc: "북아메리카 최북단에 위치하며, 러시아에 이어 세계에서 두 번째로 영토가 넓은 나라입니다. 아름다운 단풍과 장엄한 로키산맥 등 대자연으로 잘 알려져 있습니다." },
+            "840": { name: "미국", capital: "워싱턴 D.C.", iso2: "us", lat: 38.8951, lng: -77.0364, pop: "약 3억 3,400만 명", lang: "영어 (연방 공용어는 없으나 사실상 영어)", rel: "개신교, 가톨릭 등", desc: "50개의 주와 특별구로 이루어진 강대국으로, 정치, 경제, 문화, 군사 등 다양한 분야에서 세계적인 영향력을 끼치고 있습니다." },
+            "484": { name: "멕시코", capital: "멕시코시티", iso2: "mx", lat: 19.4326, lng: -99.1332, pop: "약 1억 2,800만 명", lang: "스페인어", rel: "가톨릭", desc: "마야 문명과 아스테카 문명의 발상지입니다. 선인장, 타코, 그리고 치첸이트사 같은 거대한 고대 유적으로 매우 유명합니다." },
+            "320": { name: "과테말라", capital: "과테말라시티", iso2: "gt", lat: 14.6349, lng: -90.5069, pop: "약 1,700만 명", lang: "스페인어", rel: "가톨릭, 개신교", desc: "중앙아메리카에 위치하며 웅장한 마야 문명의 중심지였던 '티칼(Tikal)' 유적이 울창한 밀림 속에 남아 있습니다." },
+            "084": { name: "벨리즈", capital: "벨모판", iso2: "bz", lat: 17.2510, lng: -88.7590, pop: "약 40만 명", lang: "영어", rel: "가톨릭, 개신교", desc: "중앙아메리카에서 유일하게 영어를 공식 언어로 사용하는 국가입니다. 바다의 신비로 불리는 '그레이트 블루홀'이 위치해 있습니다." },
+            "340": { name: "온두라스", capital: "테구시갈파", iso2: "hn", lat: 14.0818, lng: -87.2068, pop: "약 1,000만 명", lang: "스페인어", rel: "가톨릭", desc: "카리브해와 태평양에 모두 접해 있으며, 고대 마야의 예술과 천문학이 발달했던 코판(Copán) 유적이 있습니다." },
+            "222": { name: "엘살바도르", capital: "산살바도르", iso2: "sv", lat: 13.6929, lng: -89.2182, pop: "약 650만 명", lang: "스페인어", rel: "가톨릭, 개신교", desc: "중앙아메리카 국가 중 면적이 가장 작지만 인구 밀도가 가장 높습니다. 활화산이 많아 '화산의 나라'라고도 불립니다." },
+            "558": { name: "니카라과", capital: "마나과", iso2: "ni", lat: 12.1150, lng: -86.2362, pop: "약 690만 명", lang: "스페인어", rel: "가톨릭", desc: "중앙아메리카에서 가장 영토가 넓은 나라로, 담수호지만 상어가 사는 거대한 '니카라과 호수'가 유명합니다." },
+            "188": { name: "코스타리카", capital: "산호세", iso2: "cr", lat: 9.9281, lng: -84.0907, pop: "약 520만 명", lang: "스페인어", rel: "가톨릭", desc: "헌법으로 군대를 폐지하고 평화주의를 지향하는 나라입니다. 국토의 많은 부분이 국립공원으로 지정되어 생태 관광이 발달했습니다." },
+            "591": { name: "파나마", capital: "파나마시티", iso2: "pa", lat: 8.9824, lng: -79.5199, pop: "약 440만 명", lang: "스페인어", rel: "가톨릭", desc: "북아메리카와 남아메리카를 잇는 좁은 지협에 위치합니다. 태평양과 대서양을 뱃길로 연결하는 '파나마 운하'로 세계 무역의 중심지 역할을 합니다." },
+            "192": { name: "쿠바", capital: "아바나", iso2: "cu", lat: 23.1136, lng: -82.3666, pop: "약 1,100만 명", lang: "스페인어", rel: "가톨릭", desc: "카리브해에서 가장 큰 섬나라이며 사회주의 공화국입니다. 아바나의 올드카 풍경과 살사 음악, 시가 등이 상징적입니다." },
+            "214": { name: "도미니카 공화국", capital: "산토도밍고", iso2: "do", lat: 18.4861, lng: -69.9312, pop: "약 1,100만 명", lang: "스페인어", rel: "가톨릭", desc: "히스파니올라 섬의 동부를 차지하고 있으며, 카리브해 최고의 에메랄드빛 해변을 가진 휴양지 푼타카나로 유명합니다." },
+            "332": { name: "아이티", capital: "포르토프랭스", iso2: "ht", lat: 18.5392, lng: -72.3364, pop: "약 1,150만 명", lang: "프랑스어, 아이티 크레올어", rel: "가톨릭, 부두교", desc: "세계 최초로 흑인 노예들이 혁명을 일으켜 독립을 쟁취한 공화국입니다. 거대한 산성인 시타델 라페리에르 요새가 남아있습니다." },
+            "388": { name: "자메이카", capital: "킹스턴", iso2: "jm", lat: 17.9714, lng: -76.7936, pop: "약 280만 명", lang: "영어", rel: "개신교", desc: "자유로운 분위기의 '레게(Reggae)' 음악이 탄생한 곳입니다. 우사인 볼트로 대표되는 육상 단거리의 절대 강국이기도 합니다." },
+            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, pop: "약 5,200만 명", lang: "스페인어", rel: "가톨릭", desc: "남미 북부에 위치하며 안데스 산맥이 지나갑니다. 적도 근처의 고산 기후 덕분에 세계 최고급 커피 원산지로 매우 유명합니다." },
+            "862": { name: "베네수엘라", capital: "카라카스", iso2: "ve", lat: 10.4806, lng: -66.9036, pop: "약 2,800만 명", lang: "스페인어", rel: "가톨릭", desc: "세계 최대의 석유 매장량을 가진 나라입니다. 테이블 산(테푸이)에서 떨어지는 세계에서 가장 높은 폭포인 '앙헬 폭포'가 비경을 이룹니다." },
+            "328": { name: "가이아나", capital: "조지타운", iso2: "gy", lat: 6.8013, lng: -58.1551, pop: "약 80만 명", lang: "영어", rel: "힌두교, 기독교", desc: "남아메리카에서 유일하게 영어를 공용어로 사용하는 국가입니다. 인간의 발길이 닿지 않은 거대한 원시 열대우림이 보존되어 있습니다." },
+            "740": { name: "수리남", capital: "파라마리보", iso2: "sr", lat: 5.8520, lng: -55.2038, pop: "약 60만 명", lang: "네덜란드어", rel: "힌두교, 기독교, 이슬람교", desc: "남아메리카 대륙에서 가장 작은 독립국입니다. 과거 네덜란드의 식민지였으며, 다인종 다종교가 평화롭게 공존하는 문화를 가졌습니다." },
+            "218": { name: "에콰도르", capital: "키토", iso2: "ec", lat: -0.1807, lng: -78.4678, pop: "약 1,800만 명", lang: "스페인어", rel: "가톨릭", desc: "국명 자체가 스페인어로 '적도'를 뜻합니다. 다윈의 진화론 배경이 된 희귀 동식물의 천국 '갈라파고스 제도'를 영유하고 있습니다." },
+            "604": { name: "페루", capital: "리마", iso2: "pe", lat: -12.0464, lng: -77.0428, pop: "약 3,400만 명", lang: "스페인어, 케추아어 등", rel: "가톨릭", desc: "과거 찬란했던 안데스 잉카 제국의 심장이었던 나라입니다. 구름 위의 공중 도시라 불리는 '마추픽추' 유적이 세계적으로 유명합니다." },
+            "076": { name: "브라질", capital: "브라질리아", iso2: "br", lat: -15.8267, lng: -47.9218, pop: "약 2억 1,500만 명", lang: "포르투갈어", rel: "가톨릭", desc: "남미 대륙 면적의 절반을 차지하는 거대 국가입니다. 지구의 허파라 불리는 아마존 열대우림과 열정적인 삼바 축제로 잘 알려져 있습니다." },
+            "068": { name: "볼리비아", capital: "수크레", iso2: "bo", lat: -19.0333, lng: -65.2627, pop: "약 1,200만 명", lang: "스페인어 외 다수 선주민어", rel: "가톨릭", desc: "바다가 없는 안데스 산맥의 고산 내륙국입니다. 비가 오면 거대한 거울처럼 변하는 신비로운 '우유니 소금사막'이 절경을 이룹니다." },
+            "600": { name: "파라과이", capital: "아순시온", iso2: "py", lat: -25.2637, lng: -57.5759, pop: "약 730만 명", lang: "스페인어, 과라니어", rel: "가톨릭", desc: "남아메리카 한가운데 위치한 내륙국으로 농축산업이 경제의 큰 비중을 차지합니다. 전통 언어인 과라니어를 스페인어와 함께 널리 씁니다." },
+            "858": { name: "우루과이", capital: "몬테비데오", iso2: "uy", lat: -34.9011, lng: -56.1645, pop: "약 340만 명", lang: "스페인어", rel: "가톨릭", desc: "남미에서 민주주의와 복지 수준이 가장 안정적인 나라 중 하나입니다. 인구는 적지만 월드컵 초대 우승국일 정도로 축구를 사랑합니다." },
+            "032": { name: "아르헨티나", capital: "부에노스아이레스", iso2: "ar", lat: -34.6037, lng: -58.3816, pop: "약 4,600만 명", lang: "스페인어", rel: "가톨릭", desc: "정열적인 춤 '탱고'의 발상지입니다. 광활하고 비옥한 팜파스 초원과 남부 파타고니아의 장엄한 빙하 등 웅장한 대자연을 자랑합니다." },
+            "152": { name: "칠레", capital: "산티아고", iso2: "cl", lat: -33.4489, lng: -70.6693, pop: "약 1,950만 명", lang: "스페인어", rel: "가톨릭", desc: "안데스 산맥과 태평양 사이에 위치하여 세계에서 남북으로 가장 긴 특이한 지형을 가졌습니다. 구리 수출국 1위이며 와인으로도 유명합니다." }
         };
 
         // 전역 상태 변수
-        let globalFeatures = null; // TopoJSON에서 추출한 아메리카 국가 feature 배열
+        let globalFeatures = null;
         let studySvg = null;
         let quizSvg = null;
         let isStudyMapLoaded = false;
@@ -451,6 +425,7 @@
             svg.on("dblclick.zoom", null);
         }
 
+        // 지도를 클릭했을 때 정보 표시
         function handleStudyClick(countryId, element) {
             // 모든 국가 선택 해제
             d3.selectAll('.study-country').classed('selected', false);
@@ -462,54 +437,51 @@
             const panel = document.getElementById('study-info-panel');
             
             if(data) {
-                // 한글 깨짐 방지를 위해 영문 텍스트(Landmark Image)로 Fallback 이미지 설정
-                const fallbackImg = `https://placehold.co/600x400/e2e8f0/475569?text=Landmark+Image`;
+                // 국기 이미지 로드 실패 시 글자로 대체
                 const flagFallbackImg = `https://placehold.co/160x100/e2e8f0/475569?text=${encodeURIComponent(data.iso2.toUpperCase())}`;
 
                 panel.innerHTML = `
-                    <div class="animate-fade-in w-full text-left space-y-4 flex flex-col h-full">
-                        
-                        <!-- 상단 커버 이미지 -->
-                        <div class="w-full h-40 rounded-2xl overflow-hidden shadow-sm relative group bg-slate-200">
-                            <img src="${data.imageUrl}" alt="${data.name} 랜드마크 풍경" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                 onerror="this.onerror=null; this.src='${fallbackImg}';">
+                    <div class="animate-fade-in w-full text-left flex flex-col h-full">
+                        <!-- 국기 및 국가 이름/수도 -->
+                        <div class="flex items-center gap-4 border-b border-slate-200 pb-4 mb-4">
+                            <img src="https://flagcdn.com/w160/${data.iso2}.png" alt="${data.name} 국기" 
+                                 class="w-24 h-auto rounded shadow-sm border border-slate-200 bg-white"
+                                 onerror="this.onerror=null; this.src='${flagFallbackImg}';">
+                            <div>
+                                <h3 class="text-3xl font-black text-slate-800">${data.name}</h3>
+                                <p class="text-amber-500 font-bold mt-1 text-lg">
+                                    <i class="fa-solid fa-star"></i> 수도: ${data.capital}
+                                </p>
+                            </div>
                         </div>
 
-                        <div>
-                            <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
-                                <!-- 고화질 국기 이미지 (FlagCDN) -->
-                                <img src="https://flagcdn.com/w160/${data.iso2}.png" alt="${data.name} 국기" 
-                                     class="w-20 h-auto rounded shadow-sm border border-slate-200 bg-white"
-                                     onerror="this.onerror=null; this.src='${flagFallbackImg}';">
-                                <div>
-                                    <h3 class="text-3xl font-black text-slate-800">${data.name}</h3>
-                                    <p class="text-amber-500 font-bold mt-1 text-lg">
-                                        <i class="fa-solid fa-star"></i> 수도: ${data.capital}
-                                    </p>
-                                </div>
+                        <!-- 위키백과 상세 정보 카드 -->
+                        <div class="bg-indigo-50/70 p-5 rounded-2xl border border-indigo-100 mb-4 space-y-3 text-sm md:text-base text-slate-700 shadow-inner">
+                            <div class="flex items-start gap-3">
+                                <i class="fa-solid fa-users text-indigo-500 mt-1 w-5 text-center"></i>
+                                <p><span class="font-bold text-slate-800">인구:</span> ${data.pop}</p>
                             </div>
-                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 leading-relaxed text-slate-700 mt-4 text-sm md:text-base">
-                                ${data.desc}
+                            <div class="flex items-start gap-3">
+                                <i class="fa-solid fa-language text-indigo-500 mt-1 w-5 text-center"></i>
+                                <p><span class="font-bold text-slate-800">언어:</span> ${data.lang}</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fa-solid fa-hands-praying text-indigo-500 mt-1 w-5 text-center"></i>
+                                <p><span class="font-bold text-slate-800">종교:</span> ${data.rel}</p>
                             </div>
                         </div>
-                        
-                        <!-- AI 지식 확장 영역 -->
-                        <div class="flex-grow bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-4 flex flex-col">
-                            <h4 class="font-bold text-slate-700 flex items-center gap-2 mb-3 text-sm md:text-base">
-                                <i class="fa-solid fa-sparkles text-purple-500"></i> <span class="ai-gradient-text">AI 보조교사의 심화 학습</span>
+
+                        <!-- 국가 특징 설명 -->
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 leading-relaxed text-slate-700 text-sm md:text-base flex-grow">
+                            <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-book-open text-slate-400"></i> 주요 특징
                             </h4>
-                            <button id="ai-fact-btn" onclick="requestAIFact('${data.name}')" class="ai-glow-btn w-full bg-white border border-purple-200 text-purple-600 font-bold py-2.5 rounded-xl shadow-sm hover:bg-purple-50 transition flex items-center justify-center gap-2 text-sm">
-                                <i class="fa-solid fa-brain"></i> ${data.name}에 대해 더 알려주세요!
-                            </button>
-                            <div id="ai-fact-content" class="mt-4 text-sm text-slate-700 leading-relaxed overflow-y-auto hidden flex-grow bg-white p-3 rounded-xl border border-purple-100 shadow-inner">
-                                <!-- AI 상식 내용 -->
-                            </div>
+                            <p>${data.desc}</p>
                         </div>
 
-                        <div class="text-center pt-2 shrink-0">
-                            <span class="inline-block px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-xs font-semibold">
-                                <i class="fa-solid fa-check-circle mr-1"></i> 위치 확인 완료
+                        <div class="text-center pt-4 shrink-0">
+                            <span class="inline-block px-4 py-2 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">
+                                <i class="fa-solid fa-check-circle mr-1"></i> 위치 및 정보 확인 완료
                             </span>
                         </div>
                     </div>
@@ -545,17 +517,6 @@
             document.getElementById('quiz-current-num').innerText = currentQuizIndex + 1;
             document.getElementById('quiz-score').innerText = score;
             document.getElementById('quiz-feedback-box').classList.add('hidden');
-            
-            // AI 힌트 UI 초기화
-            const aiHintBtn = document.getElementById('ai-hint-btn');
-            const aiHintContent = document.getElementById('ai-hint-content');
-            if(aiHintBtn && aiHintContent) {
-                aiHintBtn.style.display = 'flex';
-                aiHintBtn.disabled = false;
-                aiHintBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> AI에게 힌트 받기';
-                aiHintContent.classList.add('hidden');
-                aiHintContent.innerHTML = '';
-            }
             
             // 모든 국가 맵 색상 초기화
             resetQuizMapColors();
@@ -642,7 +603,7 @@
             document.getElementById('quiz-result-screen').classList.remove('hidden');
             document.getElementById('final-score').innerText = score;
             
-            // 점수에 따른 피드백 이펙트 (폭죽 등 추가 가능)
+            // 점수에 따른 피드백
             if(score >= 80) {
                 document.getElementById('quiz-result-screen').querySelector('h2').innerText = "훌륭합니다! 지리 마스터!";
             } else if (score >= 50) {
@@ -657,94 +618,12 @@
             loadMapData();
         };
 
-        // 창 크기 조절 시 D3 맵 리사이징 처리 방어 로직 (간단히)
+        // 창 크기 조절 시 D3 맵 리사이징 방어 로직
         window.addEventListener('resize', () => {
             if(isStudyMapLoaded || isQuizMapLoaded) {
-                // Resize 발생시 map을 다시 그리면 부하가 올 수 있으므로 생략하거나 디바운싱 적용 가능
-                // 현재는 SVG viewBox 덕분에 비율이 유지되며 자동 반응형 처리됨
+                // SVG viewBox 덕분에 비율이 유지됨
             }
         });
-
-        // ==========================================
-        // Gemini API 연동 기능
-        // ==========================================
-        const apiKey = "AIzaSyCz7aqCEn1HzH4I1ivjuuplvezxQ3ACDdg"; // 선생님의 발급받은 API 키 적용 완료
-        // 보다 안정적인 모델(gemini-1.5-flash)로 변경
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-        // 공통 Gemini API 호출 함수
-        async function fetchFromGemini(prompt, systemInstruction) {
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] }
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const data = await response.json();
-                
-                if (data.candidates && data.candidates.length > 0) {
-                    return data.candidates[0].content.parts[0].text;
-                } else {
-                    console.error("Gemini Response Error:", data);
-                    return "AI 응답을 불러오는 중 문제가 발생했습니다.";
-                }
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                return "네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.";
-            }
-        }
-
-        // 1. 학습 모드 - AI 상식 가져오기
-        async function requestAIFact(countryName) {
-            const btn = document.getElementById('ai-fact-btn');
-            const contentBox = document.getElementById('ai-fact-content');
-            
-            // 로딩 상태 처리
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 재미있는 이야기를 찾아보는 중...';
-            contentBox.classList.add('hidden');
-
-            const systemInstruction = "당신은 친절하고 재미있는 지리 선생님입니다. 초등학생~중학생이 이해하기 쉽고 흥미를 느낄 수 있는 말투로 대답해주세요. 설명은 너무 길지 않게 핵심만 짚어주세요.";
-            const prompt = `지도 학습 중입니다. 학생이 '${countryName}'을(를) 클릭했습니다. 이 국가와 관련된 아주 신기하고 재미있는 지리, 역사, 문화 상식 2가지를 알려주세요. 각괄호나 볼드체 등을 써서 가독성 좋게 HTML 형태로 서식을 지정해도 좋습니다. (줄바꿈은 <br> 태그 사용)`;
-
-            const resultText = await fetchFromGemini(prompt, systemInstruction);
-
-            // 결과 표시
-            btn.style.display = 'none'; // 버튼 숨기기
-            contentBox.innerHTML = resultText;
-            contentBox.classList.remove('hidden');
-        }
-
-        // 2. 퀴즈 모드 - AI 힌트 가져오기
-        async function requestAIHint() {
-            const targetId = quizPool[currentQuizIndex];
-            if (!targetId) return;
-            const countryName = americasData[targetId].name;
-            const capitalName = americasData[targetId].capital;
-
-            const btn = document.getElementById('ai-hint-btn');
-            const contentBox = document.getElementById('ai-hint-content');
-
-            // 로딩 상태 처리
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 힌트를 고민하는 중...';
-
-            const systemInstruction = "당신은 지리 퀴즈 출제자이자 힌트 제공자입니다. 절대 국가의 이름이나 수도 이름을 직접 언급하지 마세요.";
-            const prompt = `학생이 아메리카 대륙 지도 퀴즈를 풀고 있습니다. 현재 맞춰야 할 국가는 '${countryName}'입니다. 이 국가가 어디에 있는지 유추할 수 있도록, 지형적 특징, 위치적 특징(주변 국가나 바다), 또는 아주 유명한 상징물에 대한 힌트를 1~2문장으로 주세요. 정답을 쉽게 맞출 수 있게 도와주되, 직접적인 국가명('${countryName}')이나 수도명('${capitalName}')은 반드시 숨겨주세요.`;
-
-            const resultText = await fetchFromGemini(prompt, systemInstruction);
-
-            // 결과 표시
-            btn.style.display = 'none';
-            contentBox.innerHTML = `<strong>💡 AI 힌트:</strong><br>${resultText}`;
-            contentBox.classList.remove('hidden');
-        }
     </script>
 </body>
 </html>
