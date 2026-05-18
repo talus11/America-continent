@@ -277,7 +277,7 @@
             "214": { name: "도미니카 공화국", capital: "산토도밍고", iso2: "do", lat: 18.4861, lng: -69.9312, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Basilica_de_Nuestra_Senora_de_la_Altagracia_2.jpg?width=800", desc: "카리브해 히스파니올라 섬의 동부를 차지하며 아름다운 휴양지와 독특한 건축물들이 즐비합니다." },
             "332": { name: "아이티", capital: "포르토프랭스", iso2: "ht", lat: 18.5392, lng: -72.3364, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Citadelle_Laferri%C3%A8re.jpg?width=800", desc: "세계 최초로 흑인 노예들이 혁명을 일으켜 독립한 공화국으로 시타델 라페리에르 요새가 있습니다." },
             "388": { name: "자메이카", capital: "킹스턴", iso2: "jm", lat: 17.9714, lng: -76.7936, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Dunns_River_Falls_Jamaica.jpg?width=800", desc: "레게 음악의 발상지이자 육상 단거리 강국으로, 던스 리버 폭포 등 자연경관이 수려합니다." },
-            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg?width=800", desc: "남미 북부에 위치하며 최고급 커피 원산지로 매우 유명합니다. 협곡에 세워진 라스 라하스 성당이 절경입니다." },
+            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg/800px-Santuario_de_Las_Lajas%2C_Ipiales%2C_Colombia.jpg", desc: "남미 북부에 위치하며 최고급 커피 원산지로 매우 유명합니다. 협곡에 세워진 라스 라하스 성당이 절경입니다." },
             "862": { name: "베네수엘라", capital: "카라카스", iso2: "ve", lat: 10.4806, lng: -66.9036, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salto_Angel-Venezuela.jpg?width=800", desc: "세계에서 가장 높은 폭포인 엔젤 폭포(앙헬 폭포)가 있는 자연의 경이로움을 간직한 나라입니다." },
             "328": { name: "가이아나", capital: "조지타운", iso2: "gy", lat: 6.8013, lng: -58.1551, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Kaieteur_Falls_Guyana_2.jpg?width=800", desc: "남미 북부에 위치하며 원시 열대우림과 거대한 카이에투어 폭포가 잘 보존된 나라입니다." },
             "740": { name: "수리남", capital: "파라마리보", iso2: "sr", lat: 5.8520, lng: -55.2038, imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Saint_Peter_and_Paul_Cathedral_Paramaribo.jpg?width=800", desc: "남미에서 가장 면적이 작은 독립국 중 하나이며 나무로 지어진 성 베드로 바울 대성당이 유명합니다." },
@@ -462,8 +462,8 @@
             const panel = document.getElementById('study-info-panel');
             
             if(data) {
-                // 이미지 로드 실패 시 깨짐 방지를 위한 Fallback 처리
-                const fallbackImg = `https://placehold.co/600x400/e2e8f0/475569?text=${encodeURIComponent(data.name)}+Landmark`;
+                // 한글 깨짐 방지를 위해 영문 텍스트(Landmark Image)로 Fallback 이미지 설정
+                const fallbackImg = `https://placehold.co/600x400/e2e8f0/475569?text=Landmark+Image`;
                 const flagFallbackImg = `https://placehold.co/160x100/e2e8f0/475569?text=${encodeURIComponent(data.iso2.toUpperCase())}`;
 
                 panel.innerHTML = `
@@ -668,8 +668,9 @@
         // ==========================================
         // Gemini API 연동 기능
         // ==========================================
-        const apiKey = ""; // Canvas 환경에서 자동 주입됨
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const apiKey = "AIzaSyDC4Y53oKtZWHdzezsRqHZs9K766S4dpEs"; // 선생님의 발급받은 API 키 적용 완료
+        // 보다 안정적인 모델(gemini-1.5-flash)로 변경
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
         // 공통 Gemini API 호출 함수
         async function fetchFromGemini(prompt, systemInstruction) {
