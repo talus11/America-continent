@@ -43,7 +43,6 @@
             transition: fill 0.2s, opacity 0.2s, filter 0.2s;
             cursor: pointer;
             stroke: #ffffff;
-            /* 테두리를 얇게 설정하고, 줌인 해도 굵기가 유지되도록 vector-effect 추가 */
             stroke-width: 0.5px;
             vector-effect: non-scaling-stroke; 
         }
@@ -137,7 +136,7 @@
                     <p class="text-slate-500 text-sm">국가명이나 수도를 보고 정확한 영토 위치를 지도에서 찾아 클릭합니다.</p>
                 </div>
 
-                <!-- 3. 국기 맞추기 (신규) -->
+                <!-- 3. 국기 맞추기 -->
                 <div onclick="switchView('flagquiz')" class="cursor-pointer bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-xl hover:border-blue-400 transition-all text-left group">
                     <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-flag"></i>
@@ -202,14 +201,17 @@
                         <h2 class="text-2xl font-black text-slate-800 mb-2">기본 영토 퀴즈</h2>
                         <button onclick="startBasicQuiz()" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all">시작하기</button>
                     </div>
-                    <div id="quiz-play-screen" class="hidden flex-grow flex flex-col">
-                        <div class="flex justify-between font-bold text-slate-500 bg-slate-100 p-3 rounded-lg mb-6">
+                    <div id="quiz-play-screen" class="hidden flex-grow flex flex-col relative">
+                        <div class="flex justify-between font-bold text-slate-500 bg-slate-100 p-3 rounded-lg mb-6 shrink-0">
                             <span>문제 <span id="quiz-current-num" class="text-emerald-600 text-lg">1</span> / 10</span>
                             <span>점수: <span id="quiz-score" class="text-amber-500 text-lg">0</span></span>
                         </div>
-                        <h3 id="quiz-question-text" class="text-2xl font-black text-slate-800 leading-tight mb-4">질문</h3>
-                        <p class="text-slate-500 text-sm mb-4">지도에서 정확한 영토를 찾아 클릭하세요.</p>
-                        <div id="quiz-feedback-box" class="p-4 rounded-xl text-center font-bold hidden border mt-auto mb-4"></div>
+                        <h3 id="quiz-question-text" class="text-2xl font-black text-slate-800 leading-tight mb-4 shrink-0">질문</h3>
+                        <p class="text-slate-500 text-sm mb-4 shrink-0">지도에서 정확한 영토를 찾아 클릭하세요.</p>
+                        
+                        <div class="flex-grow flex flex-col justify-end pb-4">
+                            <div id="quiz-feedback-box" class="p-4 rounded-xl text-center font-bold hidden border w-full"></div>
+                        </div>
                     </div>
                     <div id="quiz-result-screen" class="hidden flex-grow flex flex-col items-center justify-center text-center">
                         <i class="fa-solid fa-trophy text-6xl text-amber-400 mb-4"></i>
@@ -230,7 +232,7 @@
                     <div id="fq-feedback-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 z-10"><div id="fq-feedback-icon" class="text-9xl drop-shadow-2xl"></div></div>
                 </div>
                 <!-- 오른쪽 퀴즈 UI -->
-                <div class="w-full md:w-1/3 h-2/3 md:h-full bg-white p-6 flex flex-col overflow-y-auto">
+                <div class="w-full md:w-1/3 h-2/3 md:h-full bg-white p-4 md:p-6 flex flex-col overflow-y-auto relative">
                     <div id="flagquiz-start-screen" class="flex-grow flex flex-col items-center justify-center text-center">
                         <i class="fa-solid fa-flag text-6xl text-blue-500 mb-4"></i>
                         <h2 class="text-2xl font-black text-slate-800 mb-2">국기 맞추기</h2>
@@ -238,24 +240,28 @@
                         <button onclick="startFlagQuiz()" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all">게임 시작하기</button>
                     </div>
                     
-                    <div id="flagquiz-play-screen" class="hidden flex-grow flex flex-col">
-                        <div class="flex justify-between font-bold text-slate-500 bg-blue-50 border border-blue-100 p-3 rounded-lg mb-6 shrink-0">
+                    <div id="flagquiz-play-screen" class="hidden flex-grow flex flex-col pb-16"> <!-- 다음 문제 버튼 고정을 위한 pb 추가 -->
+                        <div class="flex justify-between font-bold text-slate-500 bg-blue-50 border border-blue-100 p-2 md:p-3 rounded-lg mb-4 shrink-0">
                             <span>문제 <span id="fq-current-num" class="text-blue-600 text-lg">1</span> / 10</span>
                             <span>점수: <span id="fq-score" class="text-blue-600 text-lg">0</span></span>
                         </div>
                         
-                        <div class="flex justify-center mb-6 shrink-0">
-                            <img id="fq-flag-img" src="" class="w-48 md:w-64 h-auto border border-slate-200 shadow-md rounded-lg bg-white" alt="국기 이미지">
+                        <div class="flex justify-center mb-4 shrink-0">
+                            <img id="fq-flag-img" src="" class="w-32 md:w-48 h-auto border border-slate-200 shadow-md rounded-lg bg-white" alt="국기 이미지">
                         </div>
 
-                        <!-- 4지선다형 버튼 영역 -->
-                        <div id="fq-options" class="grid grid-cols-1 gap-3 flex-grow content-start">
+                        <!-- 4지선다형 버튼 영역 (여백 최적화) -->
+                        <div id="fq-options" class="grid grid-cols-1 gap-2 md:gap-3 shrink-0">
                             <!-- JS에서 동적 생성 -->
                         </div>
 
-                        <div id="fq-feedback-box" class="mt-4 p-4 rounded-xl text-center font-bold hidden border shrink-0"></div>
-                        <button id="fq-next-btn" onclick="nextFlagQuizQuestion()" class="hidden mt-4 w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-all shadow-lg shrink-0">다음 문제 <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                        <div id="fq-feedback-box" class="mt-3 p-3 rounded-xl text-center font-bold hidden border shrink-0 text-sm md:text-base"></div>
                     </div>
+
+                    <!-- 태블릿 환경 최적화: '다음 문제' 버튼 스크롤 하단에 고정 -->
+                    <button id="fq-next-btn" onclick="nextFlagQuizQuestion()" class="hidden sticky bottom-0 mt-3 w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 md:py-4 rounded-xl transition-all shadow-lg border border-slate-700 z-10 shrink-0">
+                        다음 문제 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
 
                     <div id="flagquiz-result-screen" class="hidden flex-grow flex flex-col items-center justify-center text-center">
                         <i class="fa-solid fa-medal text-6xl text-blue-600 mb-4"></i>
@@ -381,7 +387,7 @@
     </main>
 
     <script>
-        // 1. 아메리카 대륙 데이터 (숫자형 면적 및 인구 데이터 추가)
+        // 1. 아메리카 대륙 데이터
         const americasData = {
             "124": { name: "캐나다", capital: "오타와", iso2: "ca", lat: 45.4215, lng: -75.6972, pop: "약 3,900만 명", popNum: 39000000, area: "약 998만 km²", areaNum: 9984670, lang: "영어, 프랑스어", rel: "기독교", desc: "세계에서 두 번째로 영토가 넓은 나라입니다." },
             "840": { name: "미국", capital: "워싱턴 D.C.", iso2: "us", lat: 38.8951, lng: -77.0364, pop: "약 3억 3,400만 명", popNum: 334000000, area: "약 983만 km²", areaNum: 9833520, lang: "영어", rel: "기독교", desc: "50개의 주로 이루어진 세계 경제/문화의 중심지입니다." },
@@ -389,7 +395,7 @@
             "032": { name: "아르헨티나", capital: "부에노스아이레스", iso2: "ar", lat: -34.6037, lng: -58.3816, pop: "약 4,600만 명", popNum: 46000000, area: "약 278만 km²", areaNum: 2780400, lang: "스페인어", rel: "가톨릭", desc: "탱고의 발상지이며, 넓은 팜파스 초원이 있습니다." },
             "484": { name: "멕시코", capital: "멕시코시티", iso2: "mx", lat: 19.4326, lng: -99.1332, pop: "약 1억 2,800만 명", popNum: 128000000, area: "약 196만 km²", areaNum: 1964375, lang: "스페인어", rel: "가톨릭", desc: "마야 문명과 아스테카 문명의 발상지입니다." },
             "604": { name: "페루", capital: "리마", iso2: "pe", lat: -12.0464, lng: -77.0428, pop: "약 3,400만 명", popNum: 34000000, area: "약 128만 km²", areaNum: 1285216, lang: "스페인어", rel: "가톨릭", desc: "잉카 제국의 심장이었으며 마추픽추가 유명합니다." },
-            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, pop: "약 5,200만 명", popNum: 52000000, area: "약 114만 km²", areaNum: 1141748, lang: "스페인어", rel: "가톨릭", desc: "남미 북부 적도 근처에 위치한 세계 최고급 커피 원산지입니다." },
+            "170": { name: "콜롬비아", capital: "보고타", iso2: "co", lat: 4.7110, lng: -74.0721, pop: "약 5,200만 명", popNum: 52000000, area: "약 114만 km²", areaNum: 1141748, lang: "스페인어", rel: "가톨릭", desc: "남미 북부 적도 근처에 위치한 최고급 커피 원산지입니다." },
             "068": { name: "볼리비아", capital: "수크레", iso2: "bo", lat: -19.0333, lng: -65.2627, pop: "약 1,200만 명", popNum: 12000000, area: "약 109만 km²", areaNum: 1098581, lang: "스페인어 등", rel: "가톨릭", desc: "신비로운 우유니 소금사막이 있는 고산 내륙국입니다." },
             "862": { name: "베네수엘라", capital: "카라카스", iso2: "ve", lat: 10.4806, lng: -66.9036, pop: "약 2,800만 명", popNum: 28000000, area: "약 91만 km²", areaNum: 916445, lang: "스페인어", rel: "가톨릭", desc: "석유 매장량이 엄청나며, 세계에서 가장 높은 앙헬 폭포가 있습니다." },
             "152": { name: "칠레", capital: "산티아고", iso2: "cl", lat: -33.4489, lng: -70.6693, pop: "약 1,950만 명", popNum: 19500000, area: "약 75만 km²", areaNum: 756102, lang: "스페인어", rel: "가톨릭", desc: "세계에서 남북으로 가장 긴 영토를 가진 나라입니다." },
@@ -642,7 +648,7 @@
         }
 
         // ==========================================
-        // 3. 국기 맞추기 (FLAG QUIZ) - 새로 추가됨
+        // 3. 국기 맞추기 (FLAG QUIZ) - 레이아웃 최적화
         // ==========================================
         let flagPool = [], flagIndex = -1, flagScore = 0, flagWaiting = false;
         let flagOptions = [];
@@ -678,7 +684,8 @@
             
             flagOptions.forEach(id => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full py-4 px-6 rounded-xl border-2 border-slate-200 text-lg font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-300 transition-all text-left shadow-sm bg-white';
+                // 버튼 패딩 최적화
+                btn.className = 'w-full py-3 px-4 md:py-4 md:px-6 rounded-xl border-2 border-slate-200 text-base md:text-lg font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-300 transition-all text-left shadow-sm bg-white';
                 btn.innerText = americasData[id].name;
                 btn.onclick = () => handleFlagQuizClick(id, btn);
                 optionsContainer.appendChild(btn);
@@ -701,11 +708,9 @@
                 btn.classList.add('pointer-events-none');
                 
                 if (btn.innerText === americasData[targetId].name) {
-                    // 정답 버튼은 무조건 초록색으로 표시
                     btn.classList.remove('border-slate-200', 'text-slate-700', 'hover:bg-blue-50', 'hover:border-blue-300');
                     btn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-800');
                 } else if (btn === btnElement && !isCorrect) {
-                    // 내가 누른 오답 버튼은 빨간색으로 표시
                     btn.classList.remove('border-slate-200', 'text-slate-700', 'hover:bg-blue-50', 'hover:border-blue-300');
                     btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
                 }
@@ -718,16 +723,14 @@
                 flagScore += 10;
                 document.getElementById('fq-score').innerText = flagScore;
                 fbBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
-                fbBox.innerHTML = '<i class="fa-solid fa-check-circle"></i> 정답입니다! 지도에서 위치를 확인하세요.';
+                fbBox.innerHTML = '<i class="fa-solid fa-check-circle"></i> 정답입니다! 지도 위치를 확인하세요.';
                 
-                // 지도에도 정답 표시
                 d3.select(`#flagquiz-country-${targetId}`).attr('fill', '#34d399');
                 showOverlayIcon('fq-feedback-overlay', 'fq-feedback-icon', true);
             } else {
                 fbBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
                 fbBox.innerHTML = `<i class="fa-solid fa-times-circle"></i> 오답입니다! 정답은 '${americasData[targetId].name}'입니다.`;
                 
-                // 지도에서 파란색으로 정답 위치 알려주기
                 d3.select(`#flagquiz-country-${targetId}`).attr('fill', '#60a5fa');
                 showOverlayIcon('fq-feedback-overlay', 'fq-feedback-icon', false);
             }
